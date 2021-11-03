@@ -1,11 +1,8 @@
 #! python3
 # Prints the current weather for a location from the command line.
-import webbrowser, sys
-import requests, bs4
-import re
 
-import json
-import subprocess
+import requests
+import bs4
 
 
 def main():
@@ -45,6 +42,7 @@ def main():
             print(f"date: {row[1]}")
             print(f"link: {row[2]}")
             print()
+
 
 if __name__ == "__main__":
     main()
