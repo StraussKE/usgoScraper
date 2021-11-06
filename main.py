@@ -1,48 +1,43 @@
 #! python3
-# Prints the current weather for a location from the command line.
+#   Go news scraping service
+#
+#   Created for use by Stew Towle in CS 361 F2021
+#   Code by Katie Strauss
+#   Last updated 11/05/2021
+#
+#   This program requests data from usgo.org/news using the requests module
+#   then parses the html using the beautifulSoup module and converts it to
+#   output as json objects in a .json file
 
 import requests
 import bs4
+import json
 
 
 def main():
-    res = requests.get('https://www.usgo.org/news/')
+    rawNewsHtml = requests.get('https://www.usgo.org/news/')
+    rawNewsHtml.raise_for_status()
 
-    res.raise_for_status()
-
-    if res.status_code is not requests.codes.ok:
-        print("error")
+    if rawNewsHtml.status_code is not requests.codes.ok:
+        print(requests.HTTPError)
 
     else:
-        goSiteParsed = bs4.BeautifulSoup(res.text, 'html.parser')
+        goSiteParsed = bs4.BeautifulSoup(rawNewsHtml.text, 'html.parser')
         htmlTitles = goSiteParsed.select('.storytitle')
         htmlDates = goSiteParsed.select('.date')
 
-        dates = []
-        for date in htmlDates:
-            dates.append(date.text)
+        objDict = []
+        for date, storyTitle in zip(htmlDates, htmlTitles):
+            href = str(storyTitle).find("href")
+            linkStart = str(storyTitle).find('"', href) + 1
+            linkEnd = str(storyTitle).find('"', linkStart) - 1
+            
+            objDict.append({"Title": storyTitle.text, "Date": date.text, "Link": str(storyTitle)[linkStart:linkEnd]})
 
-        titles = []
-        links =[]
-        for tag in htmlTitles:
-            titles.append(tag.text)
-            href = str(tag).find("href")
-            linkStart = str(tag).find('"', href) + 1
-            linkEnd = str(tag).find('"', linkStart) - 1
-
-            links.append(str(tag)[linkStart:linkEnd])
-
-        pairs = []
-
-        for title, date, link in zip(titles, dates, links):
-            pairs.append([title, date, link])
-
-        for row in pairs:
-            print(f"title: {row[0]}")
-            print(f"date: {row[1]}")
-            print(f"link: {row[2]}")
-            print()
-
+        with open("usgoNews.json", "w") as goNews:
+            goNews.write(json.dumps(objDict))
+        
+        goNews.close()
 
 if __name__ == "__main__":
     main()
