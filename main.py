@@ -37,6 +37,8 @@ def main():
         htmlDates = goSiteParsed.select('.date')
 
         for date, storyTitle in zip(htmlDates, htmlTitles):
+
+            # Locate substring indices containing story link
             href = str(storyTitle).find("href")
             linkStart = str(storyTitle).find('"', href) + 1
             linkEnd = str(storyTitle).find('"', linkStart) - 1
@@ -47,8 +49,7 @@ def main():
     finally:
         with open("usgoNews.json", "w") as goNews:
             goNews.write(json.dumps(objDict))
-
-        goNews.close()
+            goNews.close()
 
 
 if __name__ == "__main__":
