@@ -15,29 +15,41 @@ import json
 
 
 def main():
-    rawNewsHtml = requests.get('https://www.usgo.org/news/')
-    rawNewsHtml.raise_for_status()
+    objDict = []
 
-    if rawNewsHtml.status_code is not requests.codes.ok:
-        print(requests.HTTPError)
+    # Request news HTML from usgo
+    try:
+        rawNewsHtml = requests.get('https://www.usgo.org/news/')
+        rawNewsHtml.raise_for_status()
 
+    # if exception raised, create json object with error details for likely and unlikely exceptions
+    except requests.ConnectionError as disconnected:
+        objDict.append({"Title": "ConnectionError", "Date": "N/A", "Link": str(disconnected)})
+    except requests.HTTPError as error:
+        objDict.append({"Title": "HTMLError", "Date": "N/A", "Link": str(error)})
+    except:
+        objDict.append({"Title": "Unexpected Exception", "Date": "N/A", "Link": "Unexpected Exception"})
+
+    # if no exceptions, process html and create json objects from news entries
     else:
         goSiteParsed = bs4.BeautifulSoup(rawNewsHtml.text, 'html.parser')
         htmlTitles = goSiteParsed.select('.storytitle')
         htmlDates = goSiteParsed.select('.date')
 
-        objDict = []
         for date, storyTitle in zip(htmlDates, htmlTitles):
             href = str(storyTitle).find("href")
             linkStart = str(storyTitle).find('"', href) + 1
             linkEnd = str(storyTitle).find('"', linkStart) - 1
-            
+
             objDict.append({"Title": storyTitle.text, "Date": date.text, "Link": str(storyTitle)[linkStart:linkEnd]})
 
+    # output json objects to file, regardless of exception or good
+    finally:
         with open("usgoNews.json", "w") as goNews:
             goNews.write(json.dumps(objDict))
-        
+
         goNews.close()
+
 
 if __name__ == "__main__":
     main()
